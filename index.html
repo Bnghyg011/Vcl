@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>XSS Detection</title>
+</head>
+<body>
+    <h2>XSS Detection Tool</h2>
+    <form method="GET">
+        <input type="text" name="dork" placeholder="Enter Dork">
+        <button type="submit">Search</button>
+    </form>
+    <br>
+
+    <?php
+    if(isset($_GET['dork'])) {
+        $dork = $_GET['dork'];
+        $url = 'https://www.google.com/search?q=' . urlencode($dork);
+
+        $html = file_get_contents($url);
+        $dom = new DOMDocument();
+        @$dom->loadHTML($html);
+        $links = $dom->getElementsByTagName('a');
+
+        echo '<h3>Vulnerable URLs:</h3>';
+        echo '<textarea rows="10" cols="50">';
+        foreach ($links as $link) {
+            $url = $link->getAttribute('href');
+            if (strpos($url, 'http') === 0) {
+                $html = file_get_contents($url);
+                if (preg_match('/<script.*>.*<\/script>/', $html)) {
+                    echo $url . "\n";
+                }
+            }
+        }
+        echo '</textarea>';
+    }
+    ?>
+</body>
+</html>
